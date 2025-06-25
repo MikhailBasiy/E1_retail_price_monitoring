@@ -23,6 +23,7 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
         with PARSERS[domain]() as parser:
+            parser.set_location("Москва")
             parser.collect_data(urls)
             PARSED_ITEMS = pd.concat(
                 [PARSED_ITEMS, parser.export_to_df()], ignore_index=True
