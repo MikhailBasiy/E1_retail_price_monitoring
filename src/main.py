@@ -11,6 +11,11 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 
+def dump_to_excel(data: pd.DataFrame) -> None:
+    fdate = date.today().strftime("%b-%d-%Y")
+    data.to_excel(f"data/{fdate}.xlsx", engine="xlsxwriter", index=False)
+
+
 def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
     PARSERS = {
         "ozon.ru": OzonParser,
@@ -19,7 +24,8 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
     for domain, urls in urls_by_domains.items():
         with PARSERS[domain]() as parser:
             for url in urls:
-                parser.get_item_data(url)
+                parser.open_page(url)
+                parser.parse_data(url)
             logger.info(f"Parsed items: {len(parser.parsed_data)}")
             PARSED_ITEMS = pd.concat(
                 [PARSED_ITEMS, parser.export_to_df()], ignore_index=True
@@ -27,7 +33,7 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
     return PARSED_ITEMS
 
 
-def get_urls_by_domains() -> DefaultDict[str, List[str]]:
+def get_domain_urls() -> DefaultDict[str, List[str]]:
     with open("data/urls.txt", "r") as file:
         all_urls = [line.strip() for line in file]
     urls_by_domains = defaultdict(list)
@@ -38,11 +44,10 @@ def get_urls_by_domains() -> DefaultDict[str, List[str]]:
 
 
 def main():
-    urls_by_domains = get_urls_by_domains()
-    data = collect_data(urls_by_domains)
-    fdate = date.today().strftime("%b-%d-%Y")
-    data.to_excel(f"data/{fdate}.xlsx", engine="xlsxwriter", index=False)
-
+    domain_urls = get_domain_urls()
+    collected_data = collect_data(domain_urls)
+    dump_to_excel(collected_data)
+    
 
 if __name__ == "__main__":
     main()

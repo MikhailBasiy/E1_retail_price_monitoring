@@ -33,10 +33,6 @@ class BaseParser:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.browser.quit()
 
-    def get_item_data(self, url):
-        self.open_page(url)
-        self.parse_data(url)
-
     def _random_wait(self):
         delay = uniform(self.min_delay, self.max_delay)
         logger.info(f"Waiting for {delay} sec")
