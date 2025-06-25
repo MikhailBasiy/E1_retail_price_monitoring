@@ -5,7 +5,7 @@ import pandas as pd
 import tldextract
 from datetime import date
 
-from parsers.ozon_parser import OzonParser
+from parsers.ozonru_parser import OzonParser
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
