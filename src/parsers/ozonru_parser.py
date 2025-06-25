@@ -11,6 +11,12 @@ class OzonParser(BaseParser):
             browser,
             timeout=10,
             by=By.XPATH,
+            skipping_text=[
+                "Этот товар закончился",
+                "Товар не доставляется в ваш регион",
+                "Такой страницы не существует",
+                "Узнать о поступлении",
+            ],
             name_locator='//div[@data-widget="webProductHeading"]/h1',
             price_locator=(
                 '//div[@data-widget="webPrice"]/div/div[2]/div/div/span | '
