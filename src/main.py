@@ -6,6 +6,7 @@ import tldextract
 from datetime import date
 
 from parsers.ozonru_parser import OzonParser
+from parsers.divanru_parser import DivanParser
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -19,6 +20,7 @@ def dump_to_excel(data: pd.DataFrame) -> None:
 def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
     PARSERS = {
         "ozon.ru": OzonParser,
+        "divan.ru": DivanParser,
     }
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
