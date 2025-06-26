@@ -52,9 +52,8 @@ class DivanParser(BaseParser):
         self.browser.get(self.start_url)
         super()._random_wait()
         for cookie in self.cookies:
-            logger.info(f"{cookie}")
             self.browser.delete_cookie(cookie["name"])
             self.browser.add_cookie(cookie)
-            logger.info(self.browser.get_cookie(cookie["name"]))
         self.browser.get(self.start_url)
+        logger.info(f"Location {location} is set")
         super()._random_wait()
