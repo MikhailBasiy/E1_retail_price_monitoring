@@ -4,9 +4,10 @@ from random import uniform
 from time import sleep
 
 import pandas as pd
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.by import By
+from selenium.common.exceptions import TimeoutException
 
 from models.item import Item
 from utils.logger import get_logger
@@ -16,16 +17,26 @@ logger = get_logger(__name__)
 
 class BaseParser:
     def __init__(
-        self, browser, timeout, by, skipping_text, name_locator, price_locator, min_delay, max_delay
+        self,
+        browser,
+        timeout,
+        by,
+        skipping_tag_locators,
+        name_locator,
+        price_locator,
+        min_delay,
+        max_delay,
     ):
         self.browser = browser
         self.timeout = timeout
         self.by = by
-        self.skipping_text = skipping_text
+        self.skipping_tag_locators = skipping_tag_locators
         self.name_locator = name_locator
         self.price_locator = price_locator
         self.min_delay = min_delay
         self.max_delay = max_delay
+
+        self.max_retries = 3
         self.collected_data: list[Item] = []
         logger.info(f"{type(self).__name__} initialized")
 
@@ -37,17 +48,34 @@ class BaseParser:
 
     def collect_data(self, urls: list[str]):
         for url in urls:
-            self._open_page(url)
-            if self._check_product_available():
+            if not self._open_page(url):
+                logger.error(f"Page {url} was NOT downloaded")
+                continue
+            elif self._check_product_available():
                 name, price = self._parse_data()
                 self.collected_data.append(Item(url, name, price))
             else:
                 self.collected_data.append(Item(url, "Нет в продаже", 0))
                 logger.info(f"Item is {'Нет в продаже'}\nPrice is {0}")
 
-    def _open_page(self, url):
+    def _open_page(self, url, attempt=1):
         self.browser.get(url)
-        self._random_wait()
+        if self._check_page_loaded():
+            self._random_wait()
+            return True
+        elif attempt < self.max_retries:
+            return self._open_page(url, attempt + 1)
+
+    def _check_page_loaded(self):
+        wait = WebDriverWait(self.browser, self.timeout)
+        try:
+            WebDriverWait(self.browser, self.timeout).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
+        except TimeoutException:
+            return False
+        else:
+            return True
 
     def _random_wait(self):
         delay = uniform(self.min_delay, self.max_delay)
@@ -55,9 +83,11 @@ class BaseParser:
         sleep(delay)
 
     def _check_product_available(self):
-        page_content = self.browser.find_element(By.XPATH, "/html/body").text
-        if any(txt in page_content for txt in self.skipping_text):
-            logger.info(f"Encountered skip case for page:\n{self.browser.current_url}")
+        if any(
+            self.browser.find_elements(self.by, skipping_tag)
+            for skipping_tag in self.skipping_tag_locators
+        ):
+            logger.info(f"Encountered skip text on page:\n{self.browser.current_url}")
             return False
         elif WebDriverWait(self.browser, self.timeout).until(
             EC.presence_of_element_located((self.by, self.price_locator))
@@ -65,8 +95,10 @@ class BaseParser:
             logger.info(f"Price found: {self.browser.current_url}")
             return True
         else:
-            logger.error(f"Parsing failed! Check page parsing settings: {self.browser.current_url}")
-        
+            logger.error(
+                f"Parsing failed! Check page parsing settings: {self.browser.current_url}"
+            )
+
     def _parse_data(self):
         name = self.browser.find_element(self.by, self.name_locator).text
         price = self._normalize_price(

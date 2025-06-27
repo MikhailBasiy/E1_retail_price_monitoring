@@ -1,12 +1,13 @@
 from collections import defaultdict
+from datetime import date
 from typing import DefaultDict, List
 
 import pandas as pd
 import tldextract
-from datetime import date
 
-from parsers.ozonru_parser import OzonParser
 from parsers.divanru_parser import DivanParser
+from parsers.hoffru_parser import HoffParser
+from parsers.ozonru_parser import OzonParser
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -21,6 +22,7 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
     PARSERS = {
         "ozon.ru": OzonParser,
         "divan.ru": DivanParser,
+        "hoff.ru": HoffParser,
     }
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
@@ -47,7 +49,7 @@ def main():
     domain_urls = get_domain_urls()
     collected_data = collect_data(domain_urls)
     dump_to_excel(collected_data)
-    
+
 
 if __name__ == "__main__":
     main()
