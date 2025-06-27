@@ -19,8 +19,8 @@ class DivanParser(BaseParser):
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
-            '//h1[text()="Страница не найдена"]', 
-            '//span[text()="Временно нет в наличии"]'
+            '//h1[text()="Страница не найдена"]',
+            '//span[text()="Временно нет в наличии"]',
         ]
         self.name_locator = '//h1[@itemprop="name"]'
         self.price_locator = '//span[@itemprop="price"]'
