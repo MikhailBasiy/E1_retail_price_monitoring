@@ -108,7 +108,7 @@ class BaseParser:
         return name, price
 
     def _normalize_price(self, price: str):
-        return int(re.sub(r"\s|₽|руб.", "", price))
+        return int(re.sub(r"\s|₽|руб.|р", "", price))
 
     def export_to_df(self):
         return pd.DataFrame([asdict(item) for item in self.collected_data])
