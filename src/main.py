@@ -7,6 +7,8 @@ import tldextract
 
 from parsers.divanru_parser import DivanParser
 from parsers.hoffru_parser import HoffParser
+from parsers.mebelionru_parser import MebelionParser
+from parsers.mnogomebeli_parser import MnogomebeliParser
 from parsers.ozonru_parser import OzonParser
 from parsers.stolplit_parser import StolplitParser
 from utils.logger import get_logger
@@ -20,11 +22,16 @@ def dump_to_excel(data: pd.DataFrame) -> None:
 
 
 def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
+    """
+    Try...except не используется осознанно. Требуется собирать все данные, падение скрипта нужна исправлять, но не перехватывать для продолжения.
+    """
     PARSERS = {
         "ozon.ru": OzonParser,
         "divan.ru": DivanParser,
         "hoff.ru": HoffParser,
         "stolplit.ru": StolplitParser,
+        "mebelion.ru": MebelionParser,
+        "mnogomebeli.com": MnogomebeliParser,
     }
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
