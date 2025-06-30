@@ -5,6 +5,7 @@ from typing import DefaultDict, List
 import pandas as pd
 import tldextract
 
+from parsers.bestmebelshop_parser import BestmebelshopParser
 from parsers.divanru_parser import DivanParser
 from parsers.hoffru_parser import HoffParser
 from parsers.mebelionru_parser import MebelionParser
@@ -32,6 +33,7 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
         "stolplit.ru": StolplitParser,
         "mebelion.ru": MebelionParser,
         "mnogomebeli.com": MnogomebeliParser,
+        "bestmebelshop.ru": BestmebelshopParser,
     }
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
