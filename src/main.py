@@ -9,6 +9,7 @@ from parsers.bestmebelshop_parser import BestmebelshopParser
 from parsers.divanru_parser import DivanParser
 from parsers.fabrikastilru_parser import FabrikaStilParser
 from parsers.hoffru_parser import HoffParser
+from parsers.legkomarketru import LegkomarketParser
 from parsers.mebelionru_parser import MebelionParser
 from parsers.mnogomebeli_parser import MnogomebeliParser
 from parsers.ozonru_parser import OzonParser
@@ -38,15 +39,19 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
         "bestmebelshop.ru": BestmebelshopParser,
         "pm.ru": PmParser,
         "fabrika-stil.ru": FabrikaStilParser,
+        "legkomarket.ru": LegkomarketParser,
     }
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
+        # try:
         with PARSERS[domain]() as parser:
             parser.set_location("Москва")
             parser.collect_data(urls)
             PARSED_ITEMS = pd.concat(
                 [PARSED_ITEMS, parser.export_to_df()], ignore_index=True
             )
+        # except KeyError:
+        #     logger.info(f"No parser found for {domain}")
     return PARSED_ITEMS
 
 

@@ -69,6 +69,16 @@ class OzonParser(BaseParser):
         )
 
     def set_location(self, location: str):
+        self.browser.execute_cdp_cmd(
+            "Browser.grantPermissions",
+            {
+                "origin": f"{self.start_url}",
+                "permissions": ["geolocation"],
+            },
+        )
+        self.browser.execute_cdp_cmd(
+            "Emulation.setGeolocationOverride", geo_settings[location]
+        )
         self.browser.get(self.start_url)
         super()._random_wait()
         self.browser.execute_script(self.set_location_script)
