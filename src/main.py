@@ -13,6 +13,7 @@ from parsers.legkomarketru import LegkomarketParser
 from parsers.mebelionru_parser import MebelionParser
 from parsers.mnogomebeli_parser import MnogomebeliParser
 from parsers.ozonru_parser import OzonParser
+from parsers.parkmebelicom_parser import ParkmebeliParser
 from parsers.pm_parser import PmParser
 from parsers.stolplit_parser import StolplitParser
 from utils.logger import get_logger
@@ -40,6 +41,7 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
         "pm.ru": PmParser,
         "fabrika-stil.ru": FabrikaStilParser,
         "legkomarket.ru": LegkomarketParser,
+        "parkmebeli.com": ParkmebeliParser,
     }
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
