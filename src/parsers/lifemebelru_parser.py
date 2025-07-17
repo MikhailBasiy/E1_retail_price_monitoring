@@ -40,11 +40,12 @@ class LifemebelParser(BaseParser):
         self.by = By.XPATH
         self.skipping_tag_locators = [
             '//div[@class="new-product-cta-not-available" and text()="Недоступен для продажи"]',
+            '//h1[text()="Cтраница не найдена"]',
         ]
         self.name_locator = "//h1"
         self.price_locator = '//div[@itemprop="price"]'
-        self.min_delay = 2.0
-        self.max_delay = 4.0
+        self.min_delay = 3.0
+        self.max_delay = 5.0
 
         super().__init__(
             browser=self.browser,
