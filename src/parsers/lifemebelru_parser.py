@@ -40,6 +40,7 @@ class LifemebelParser(BaseParser):
         self.by = By.XPATH
         self.skipping_tag_locators = [
             '//div[@class="new-product-cta-not-available" and text()="Недоступен для продажи"]',
+            '//div[@class="new-product-status" and contains(text(), "Нет в наличии")]',
             '//h1[text()="Cтраница не найдена"]',
         ]
         self.name_locator = "//h1"
