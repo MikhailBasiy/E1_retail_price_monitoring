@@ -13,6 +13,7 @@ from parsers.nonton_parser import NontonParser
 from parsers.ozon_parser import OzonParser
 from parsers.pm_parser import PmParser
 from parsers.stolplit_parser import StolplitParser
+from parsers.pushe import PusheParser
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -41,6 +42,7 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
         "legkomarket.ru": LegkomarketParser,
         "parkmebeli.com": ParkmebeliParser,
         "lifemebel.ru": LifemebelParser,
+        "pushe.ru": PusheParser,
     }
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
