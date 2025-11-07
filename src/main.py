@@ -6,15 +6,11 @@ import pandas as pd
 import tldextract
 
 from parsers.bestmebelshop_parser import BestmebelshopParser
-from parsers.divanru_parser import DivanParser
-from parsers.fabrikastilru_parser import FabrikaStilParser
-from parsers.hoffru_parser import HoffParser
-from parsers.legkomarketru import LegkomarketParser
-from parsers.lifemebelru_parser import LifemebelParser
-from parsers.mebelionru_parser import MebelionParser
+from parsers.hoff_parser import HoffParser
+from parsers.lemanapro import LemanaproParser
 from parsers.mnogomebeli_parser import MnogomebeliParser
-from parsers.ozonru_parser import OzonParser
-from parsers.parkmebelicom_parser import ParkmebeliParser
+from parsers.nonton_parser import NontonParser
+from parsers.ozon_parser import OzonParser
 from parsers.pm_parser import PmParser
 from parsers.stolplit_parser import StolplitParser
 from utils.logger import get_logger
@@ -37,6 +33,7 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
         "hoff.ru": HoffParser,
         "stolplit.ru": StolplitParser,
         "mebelion.ru": MebelionParser,
+        "lemanapro.ru": LemanaproParser,
         "mnogomebeli.com": MnogomebeliParser,
         "bestmebelshop.ru": BestmebelshopParser,
         "pm.ru": PmParser,
