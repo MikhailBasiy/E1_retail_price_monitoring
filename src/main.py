@@ -25,36 +25,28 @@ def dump_to_excel(data: pd.DataFrame) -> None:
 
 
 def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
-    """
-    Try...except не используется осознанно. Требуется собирать все данные, падение скрипта нужна исправлять, но не перехватывать для продолжения.
-    """
     PARSERS = {
-        "ozon.ru": OzonParser,
-        "divan.ru": DivanParser,
+        "bestmebelshop.ru": BestmebelshopParser,
         "hoff.ru": HoffParser,
-        "stolplit.ru": StolplitParser,
-        "mebelion.ru": MebelionParser,
         "lemanapro.ru": LemanaproParser,
         "mnogomebeli.com": MnogomebeliParser,
-        "bestmebelshop.ru": BestmebelshopParser,
+        "nonton.ru": NontonParser,
+        "ozon.ru": OzonParser,
         "pm.ru": PmParser,
-        "fabrika-stil.ru": FabrikaStilParser,
-        "legkomarket.ru": LegkomarketParser,
-        "parkmebeli.com": ParkmebeliParser,
-        "lifemebel.ru": LifemebelParser,
         "pushe.ru": PusheParser,
+        "wildberries.ru": WildberriesParser
     }
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
-        # try:
-        with PARSERS[domain]() as parser:
-            parser.set_location("Москва")
-            parser.collect_data(urls)
-            PARSED_ITEMS = pd.concat(
-                [PARSED_ITEMS, parser.export_to_df()], ignore_index=True
-            )
-        # except KeyError:
-        #     logger.info(f"No parser found for {domain}")
+        try:
+            with PARSERS[domain]() as parser:
+                parser.set_location("Москва")
+                parser.collect_data(urls)
+                PARSED_ITEMS = pd.concat(
+                    [PARSED_ITEMS, parser.export_to_df()], ignore_index=True
+                )
+        except KeyError:
+            logger.info(f"No parser found for {domain}")
     return PARSED_ITEMS
 
 
