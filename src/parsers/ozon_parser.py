@@ -54,8 +54,8 @@ class OzonParser(BaseParser):
             '//div[@data-widget="webPrice"]/div/div[2]/div/div/span | '
             '//div[@data-widget="webPrice"]/div/div/div/div/span'
         )
-        self.min_delay = 3.0
-        self.max_delay = 7.0
+        self.min_delay = 5.0
+        self.max_delay = 8.0
 
         super().__init__(
             browser=self.browser,
