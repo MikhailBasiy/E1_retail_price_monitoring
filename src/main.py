@@ -12,7 +12,6 @@ from parsers.mnogomebeli_parser import MnogomebeliParser
 from parsers.nonton_parser import NontonParser
 from parsers.ozon_parser import OzonParser
 from parsers.pm_parser import PmParser
-from parsers.stolplit_parser import StolplitParser
 from parsers.pushe import PusheParser
 from parsers.wildberries_parser import WildberriesParser
 from utils.logger import get_logger
@@ -35,7 +34,7 @@ def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
         "ozon.ru": OzonParser,
         "pm.ru": PmParser,
         "pushe.ru": PusheParser,
-        "wildberries.ru": WildberriesParser
+        "wildberries.ru": WildberriesParser,
     }
     PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
     for domain, urls in urls_by_domains.items():
