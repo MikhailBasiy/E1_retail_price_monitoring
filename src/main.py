@@ -14,6 +14,7 @@ from parsers.ozon_parser import OzonParser
 from parsers.pm_parser import PmParser
 from parsers.stolplit_parser import StolplitParser
 from parsers.pushe import PusheParser
+from parsers.wildberries_parser import WildberriesParser
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
