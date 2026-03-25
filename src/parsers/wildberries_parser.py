@@ -18,9 +18,9 @@ class WildberriesParser(BaseParser):
         self.by = By.XPATH
         self.skipping_tag_locators = [
             '//h1[@class="content404__title"]',
-            '//span[contains(@class, "soldOutProductText")]'
+            '//span[contains(@class, "soldOutProductText")]',
         ]
-        self.name_locator = '//h3[contains(@class, "productTitle")]'
+        self.name_locator = '//h2[contains(@class, "productTitle")]'
         self.price_locator = '//*[contains(@class, "priceBlockFinalPrice")]'
         self.city_locator = '//span[contains(@class, "simple-menu__link--address")]'
         self.min_delay = 4.0
