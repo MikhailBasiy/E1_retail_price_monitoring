@@ -25,7 +25,7 @@ class LemanaproParser(BaseParser):
             '//h1[text()="404"]',
         ]
         self.name_locator = '//h1[@data-qa="product-name"]/span'
-        self.price_locator = '//div[@data-qa="price-view" and contains(@class, "primary-price ")] | //div[@data-qa="price-view"]/div[2]/span'  ### //div[@data-qa="price-view"]/div[2]/span |
+        self.price_locator = '//div[@data-qa="prices_mf-pdp"]//div[@data-testid="price-block-price"]//span[@data-testid="price-integer"]'
         self.city_script = 'return document.querySelector("button[data-qa=\'region-modal-button\'] span.h4lh9ow_header-footer")?.textContent || "";'
         self.min_delay = 5.0
         self.max_delay = 8.0
