@@ -5,7 +5,7 @@ from time import sleep
 
 import pandas as pd
 import undetected_chromedriver as uc
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
@@ -117,19 +117,23 @@ class BaseParser:
             return False
 
     def _parse_data(self):
-        name = self.browser.find_element(self.by, self.name_locator).text
-        price = self._normalize_price(
-            self.browser.find_element(self.by, self.price_locator).text
-        )
-        city = self._parse_city()
-        # if self.city_locator:
-        #     city = self.browser.find_element(self.by, self.city_locator).text
-        #     city_name = self.browser.execute_script(self.city_script)
-        #     logger.info(city_name)
-        # else:
-        #     city = None
-        logger.info(f"Item is {name}\nPrice is {price}\nCity is {city}")
-        return name, price, city
+        try:
+            name = self.browser.find_element(self.by, self.name_locator).text
+            price = self._normalize_price(
+                self.browser.find_element(self.by, self.price_locator).text
+            )
+            city = self._parse_city()
+            # if self.city_locator:
+            #     city = self.browser.find_element(self.by, self.city_locator).text
+            #     city_name = self.browser.execute_script(self.city_script)
+            #     logger.info(city_name)
+            # else:
+            #     city = None
+            logger.info(f"Item is {name}\nPrice is {price}\nCity is {city}")
+            return name, price, city
+        except NoSuchElementException as e:
+            logger.error(f"Can't find data on the page {self.browser.current_url}: {e}")
+            return "", "", ""
 
     def _parse_city(self):
         if self.city_locator:
