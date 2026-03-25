@@ -1,4 +1,5 @@
 import undetected_chromedriver as uc
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 from parsers.base_parser import BaseParser
@@ -34,7 +35,9 @@ class MnogomebeliParser(BaseParser):
                 "httpOnly": True,
             },
         ]
-        self.browser = uc.Chrome()
+        self.browser_options = Options()
+        self.browser_options.page_load_strategy = "none"
+        self.browser = uc.Chrome(options=self.browser_options, version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
@@ -67,11 +70,9 @@ class MnogomebeliParser(BaseParser):
         self.browser.execute_cdp_cmd(
             "Emulation.setGeolocationOverride", geo_settings[location]
         )
-        self.browser.get(self.start_url)
-        super()._random_wait()
+        super()._open_page(self.start_url)
         for cookie in self.cookies:
             self.browser.delete_cookie(cookie["name"])
             self.browser.add_cookie(cookie)
-        self.browser.get(self.start_url)
+        super()._open_page(self.start_url)
         logger.info(f"Location {location} is set")
-        super()._random_wait()

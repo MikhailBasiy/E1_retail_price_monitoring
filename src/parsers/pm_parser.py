@@ -34,7 +34,7 @@ class PmParser(BaseParser):
                 "httpOnly": False,
             },
         ]
-        self.browser = uc.Chrome()
+        self.browser = uc.Chrome(version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [

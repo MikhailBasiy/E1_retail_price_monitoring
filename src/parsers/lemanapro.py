@@ -17,12 +17,13 @@ class LemanaproParser(BaseParser):
         ### Browser options
         self.browser_options = Options()
         self.browser_options.page_load_strategy = "none"
-        self.browser = uc.Chrome(options=self.browser_options)
+        self.browser = uc.Chrome(options=self.browser_options, version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
             '//span[contains(@class, "static-pages") and text()="Что-то пошло не так"]',
             '//h1[text()="404"]',
+            '//div[@data-qa="out-of-stock-label"]/span[text()="Товар закончился"]',
         ]
         self.name_locator = '//h1[@data-qa="product-name"]/span'
         self.price_locator = '//div[@data-qa="prices_mf-pdp"]//div[@data-testid="price-block-price"]//span[@data-testid="price-integer"]'

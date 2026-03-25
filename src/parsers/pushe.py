@@ -1,11 +1,12 @@
+from urllib.parse import urlparse, urlunparse
+
 import undetected_chromedriver as uc
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 from parsers.base_parser import BaseParser
 from parsers.config import geo_settings
 from utils.logger import get_logger
-from urllib.parse import urlparse, urlunparse
-from selenium.webdriver.chrome.options import Options
 
 logger = get_logger(__name__)
 
@@ -16,20 +17,24 @@ class PusheParser(BaseParser):
         ### Browser options
         self.browser_options = Options()
         self.browser_options.page_load_strategy = "none"
-        self.browser = uc.Chrome(options=self.browser_options)
+        self.browser = uc.Chrome(options=self.browser_options, version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
             '//h1[text()="Такая страница не найдена"]',
         ]
         self.name_locator = '//div[@class="product-card__title"]/h1'
-        self.price_locator = '//div[@class="product-card__price"]/span[@class="price-current"]'
+        self.price_locator = (
+            '//div[@class="product-card__price"]/span[@class="price-current"]'
+        )
         self.city_locator = '//div[@class="header-city__selected"]/span'
-        self.city_script = 'return document.querySelector(".header-city__selected span").textContent;'
+        self.city_script = (
+            'return document.querySelector(".header-city__selected span").textContent;'
+        )
         self.min_delay = 5.0
         self.max_delay = 8.0
         self.geo_prefixes = {
-            "Москва": None, # The site doesn't use geo prefix for Moscow
+            "Москва": None,  # The site doesn't use geo prefix for Moscow
         }
 
         super().__init__(

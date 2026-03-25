@@ -21,8 +21,8 @@ class HoffParser(BaseParser):
                 credentials: "include"
             }).then(() => location.reload());
             """
-        self.browser = uc.Chrome()
-        self.timeout = 10
+        self.browser = uc.Chrome(version_main=145)
+        self.timeout = 15
         self.by = By.XPATH
         self.skipping_tag_locators = [
             '//div[@class="no-product-text" and text()=" Этот товар закончился :( "]',

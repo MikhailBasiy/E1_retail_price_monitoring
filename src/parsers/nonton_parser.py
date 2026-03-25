@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 class NontonParser(BaseParser):
     def __init__(self):
         self.start_url = "https://www.nonton.ru/"
-        self.browser = uc.Chrome()
+        self.browser = uc.Chrome(version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = ['//div[@class="e-404"]']
