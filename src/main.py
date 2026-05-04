@@ -11,7 +11,7 @@ from parsers.lemanapro import LemanaproParser
 from parsers.mnogomebeli_parser import MnogomebeliParser
 from parsers.nonton_parser import NontonParser
 from parsers.ozon_parser import OzonParser
-from parsers.pm_parser import PmParser
+from parsers.pm import PmParser
 from parsers.pushe import PusheParser
 from parsers.wildberries_parser import WildberriesParser
 from utils.logger import get_logger
