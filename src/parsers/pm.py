@@ -37,8 +37,8 @@ class PmParser(BaseParser):
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
-            '//div[@class="out-stock-cart__text" and contains(text(), "Временно отсутствует")]',
-            '//h1[contains(text(), "Ошибка HTTP 404")]',
+            '//div[@id="add-to-notify" and not(@hidden)]',
+            '//h1[contains(text(), "Такая страница не найдена :(")]',
         ]
         self.name_locator = '//h1[@id="good-title"]'
         self.price_locator = '//div[@id="current-price"]'
