@@ -20,7 +20,6 @@ logger = get_logger(__name__)
 class BaseParser:
     def __init__(
         self,
-        browser,
         timeout,
         by,
         skipping_tag_locators,
@@ -31,7 +30,7 @@ class BaseParser:
         city_locator=None,
         city_script=None,
     ):
-        self.browser = browser
+        self.browser = uc.Chrome(version_main=148)
         self.timeout = timeout
         self.by = by
         self.skipping_tag_locators = skipping_tag_locators

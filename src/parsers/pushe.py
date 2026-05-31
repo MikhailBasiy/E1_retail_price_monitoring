@@ -17,7 +17,6 @@ class PusheParser(BaseParser):
         ### Browser options
         self.browser_options = Options()
         self.browser_options.page_load_strategy = "none"
-        self.browser = uc.Chrome(options=self.browser_options, version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
@@ -38,7 +37,6 @@ class PusheParser(BaseParser):
         }
 
         super().__init__(
-            browser=self.browser,
             timeout=self.timeout,
             by=self.by,
             skipping_tag_locators=self.skipping_tag_locators,
@@ -67,6 +65,6 @@ class PusheParser(BaseParser):
             new_netloc = ".".join((self.geo_prefixes[location], parsed_url.netloc))
             self.start_url = urlunparse(parsed_url._replace(netloc=new_netloc))
 
-        self.browser.get(self.start_url)
+        self._open_page(self.start_url)
         super()._random_wait()
         logger.info(f"Location '{location}' is set.")

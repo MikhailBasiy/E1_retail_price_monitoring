@@ -41,7 +41,6 @@ class OzonParser(BaseParser):
               "credentials": "include"
             });
         """
-        self.browser = uc.Chrome(version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
@@ -58,7 +57,6 @@ class OzonParser(BaseParser):
         self.max_delay = 22.0
 
         super().__init__(
-            browser=self.browser,
             timeout=self.timeout,
             by=self.by,
             skipping_tag_locators=self.skipping_tag_locators,

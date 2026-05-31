@@ -17,7 +17,6 @@ class LemanaproParser(BaseParser):
         ### Browser options
         self.browser_options = Options()
         self.browser_options.page_load_strategy = "none"
-        self.browser = uc.Chrome(options=self.browser_options, version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
@@ -36,7 +35,6 @@ class LemanaproParser(BaseParser):
         }
 
         super().__init__(
-            browser=self.browser,
             timeout=self.timeout,
             by=self.by,
             skipping_tag_locators=self.skipping_tag_locators,

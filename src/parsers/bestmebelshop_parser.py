@@ -34,7 +34,6 @@ class BestmebelshopParser(BaseParser):
                 "httpOnly": False,
             },
         ]
-        self.browser = uc.Chrome(version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = ['h1[text()="Данная страница не найдена!"]']
@@ -46,7 +45,6 @@ class BestmebelshopParser(BaseParser):
         self.max_delay = 7.0
 
         super().__init__(
-            browser=self.browser,
             timeout=self.timeout,
             by=self.by,
             skipping_tag_locators=self.skipping_tag_locators,

@@ -13,7 +13,6 @@ logger = get_logger(__name__)
 class WildberriesParser(BaseParser):
     def __init__(self):
         self.start_url = "https://www.wildberries.ru/"
-        self.browser = uc.Chrome(version_main=145)
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
@@ -27,7 +26,6 @@ class WildberriesParser(BaseParser):
         self.max_delay = 7.0
 
         super().__init__(
-            browser=self.browser,
             timeout=self.timeout,
             by=self.by,
             skipping_tag_locators=self.skipping_tag_locators,
