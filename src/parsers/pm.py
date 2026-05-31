@@ -73,6 +73,6 @@ class PmParser(BaseParser):
         for cookie in self.cookies:
             self.browser.delete_cookie(cookie["name"])
             self.browser.add_cookie(cookie)
-        self.browser.get(self.start_url)
+        self._open_page(self.start_url)
         logger.info(f"Location {location} is set")
         super()._random_wait()
