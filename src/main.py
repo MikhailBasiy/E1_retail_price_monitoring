@@ -1,11 +1,14 @@
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
+from pathlib import Path
 from typing import DefaultDict, List
 
 import pandas as pd
 import tldextract
 
 from parsers.bestmebelshop_parser import BestmebelshopParser
+from parsers.config import max_workers as DEFAULT_MAX_WORKERS
 from parsers.hoff_parser import HoffParser
 from parsers.lemanapro import LemanaproParser
 from parsers.mnogomebeli_parser import MnogomebeliParser
@@ -20,43 +23,94 @@ logger = get_logger(__name__)
 
 
 def dump_to_excel(data: pd.DataFrame) -> None:
-    fdate = date.today().strftime("%b-%d-%Y")
-    data.to_excel(f"data/{fdate}.xlsx", engine="xlsxwriter", index=False)
+    output_dir = Path("data")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    fdate = date.today().strftime("%Y-%m-%d")
+    file_path = output_dir / f"{fdate}.xlsx"
+    data.to_excel(file_path, engine="xlsxwriter", index=False)
+    logger.info(f"Data dumped to {file_path}")
 
 
-def collect_data(urls_by_domains: DefaultDict[str, List[str]]) -> pd.DataFrame:
-    PARSERS = {
-        "bestmebelshop.ru": BestmebelshopParser,
-        "hoff.ru": HoffParser,
-        "lemanapro.ru": LemanaproParser,
-        "mnogomebeli.com": MnogomebeliParser,
-        "nonton.ru": NontonParser,
-        "ozon.ru": OzonParser,
-        "pm.ru": PmParser,
-        "pushe.ru": PusheParser,
-        "wildberries.ru": WildberriesParser,
-    }
-    PARSED_ITEMS = pd.DataFrame(columns=["url", "name", "price"])
-    for domain, urls in urls_by_domains.items():
-        try:
-            with PARSERS[domain]() as parser:
-                parser.set_location("Москва")
-                parser.collect_data(urls)
-                PARSED_ITEMS = pd.concat(
-                    [PARSED_ITEMS, parser.export_to_df()], ignore_index=True
+PARSERS = {
+    "bestmebelshop.ru": BestmebelshopParser,
+    "hoff.ru": HoffParser,
+    "lemanapro.ru": LemanaproParser,
+    "mnogomebeli.com": MnogomebeliParser,
+    "nonton.ru": NontonParser,
+    "ozon.ru": OzonParser,
+    "pm.ru": PmParser,
+    "pushe.ru": PusheParser,
+    "wildberries.ru": WildberriesParser,
+}
+
+
+def process_domain(domain: str, urls: list[str]) -> pd.DataFrame:
+    parser_class = PARSERS.get(domain)
+
+    if parser_class is None:
+        logger.warning(f"No parser found for {domain}")
+        return pd.DataFrame(columns=["url", "name", "price"])
+
+    try:
+        logger.info(f"Start parsing {domain}")
+
+        with parser_class() as parser:
+            parser.set_location("Москва")
+            parser.collect_data(urls)
+            result = parser.export_to_df()
+
+        logger.info(f"Finished parsing {domain}. Parsed {len(result)} items")
+        return result
+
+    except Exception:
+        logger.exception(f"Failed while processing domain {domain}")
+        return pd.DataFrame(columns=["url", "name", "price"])
+
+
+def collect_data(urls_by_domains: DefaultDict[str, list[str]]) -> pd.DataFrame:
+    dfs = []
+
+    # Используем импортированный max_workers, если он задан
+    workers = min(DEFAULT_MAX_WORKERS or 4, len(urls_by_domains))
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {
+            executor.submit(process_domain, domain, urls): domain
+            for domain, urls in urls_by_domains.items()
+        }
+
+        for future in as_completed(futures):
+            domain = futures[future]
+
+            try:
+                dfs.append(future.result())
+
+            except Exception:
+                logger.exception(
+                    f"Unexpected error while collecting result for {domain}"
                 )
-        except KeyError:
-            logger.info(f"No parser found for {domain}")
-    return PARSED_ITEMS
+
+    if not dfs:
+        return pd.DataFrame(columns=["url", "name", "price"])
+
+    return pd.concat(dfs, ignore_index=True)
 
 
-def get_domain_urls() -> DefaultDict[str, List[str]]:
-    with open("data/urls.txt", "r") as file:
-        all_urls = [line.strip() for line in file]
+def get_domain_urls() -> DefaultDict[str, list[str]]:
+    file_path = Path("data/urls.txt")
+    if not file_path.exists():
+        logger.error(f"Source file {file_path} not found")
+        return defaultdict(list)
+
+    with open(file_path, "r", encoding="utf-8") as file:
+        all_urls = [line.strip() for line in file if line.strip()]
+
     urls_by_domains = defaultdict(list)
     for url in all_urls:
-        domain = tldextract.extract(url).top_domain_under_public_suffix
-        urls_by_domains[domain].append(url)
+        domain = tldextract.extract(url).registered_domain
+        if domain:
+            urls_by_domains[domain].append(url)
+
     return urls_by_domains
 
 
