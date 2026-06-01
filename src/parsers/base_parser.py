@@ -1,4 +1,5 @@
 import re
+import threading
 from dataclasses import asdict
 from random import uniform
 from time import sleep
@@ -18,6 +19,8 @@ logger = get_logger(__name__)
 
 
 class BaseParser:
+    _driver_lock = threading.Lock()
+
     def __init__(
         self,
         timeout,
@@ -30,7 +33,8 @@ class BaseParser:
         city_locator=None,
         city_script=None,
     ):
-        self.browser = uc.Chrome(version_main=148)
+        with self._driver_lock:
+            self.browser = uc.Chrome(version_main=148)
         self.timeout = timeout
         self.by = by
         self.skipping_tag_locators = skipping_tag_locators
