@@ -1,3 +1,4 @@
+import argparse
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
@@ -115,9 +116,45 @@ def get_domain_urls() -> DefaultDict[str, list[str]]:
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Web parser for furniture shops.")
+
+    # Создаем маппинг "имя аргумента -> домен" на основе ключей PARSERS
+    # Например: 'wildberries' -> 'wildberries.ru'
+    arg_to_domain = {domain.split(".")[0]: domain for domain in PARSERS}
+
+    for arg_name in arg_to_domain:
+        parser.add_argument(
+            f"--{arg_name}",
+            action="store_true",
+            help=f"Run parser for {arg_to_domain[arg_name]}",
+        )
+
+    args = parser.parse_args()
+
+    # Проверяем, были ли переданы какие-либо флаги для фильтрации
+    selected_domains = [
+        domain for arg, domain in arg_to_domain.items() if getattr(args, arg)
+    ]
+
     domain_urls = get_domain_urls()
+
+    # Если указаны конкретные парсеры, фильтруем список задач
+    if selected_domains:
+        domain_urls = {
+            d: urls for d, urls in domain_urls.items() if d in selected_domains
+        }
+        logger.info(f"Filtering runs for: {', '.join(selected_domains)}")
+
+    if not domain_urls:
+        logger.warning("No URLs found for the selected domains or urls.txt is empty.")
+        return
+
     collected_data = collect_data(domain_urls)
-    dump_to_excel(collected_data)
+
+    if not collected_data.empty:
+        dump_to_excel(collected_data)
+    else:
+        logger.warning("No data was collected, skipping export.")
 
 
 if __name__ == "__main__":
