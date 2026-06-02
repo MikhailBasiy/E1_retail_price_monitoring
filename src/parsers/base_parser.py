@@ -126,12 +126,6 @@ class BaseParser:
                 self.browser.find_element(self.by, self.price_locator).text
             )
             city = self._parse_city()
-            # if self.city_locator:
-            #     city = self.browser.find_element(self.by, self.city_locator).text
-            #     city_name = self.browser.execute_script(self.city_script)
-            #     logger.info(city_name)
-            # else:
-            #     city = None
             logger.info(f"Item is {name}\nPrice is {price}\nCity is {city}")
             return name, price, city
         except NoSuchElementException as e:
