@@ -1,18 +1,26 @@
 import re
 import threading
 from dataclasses import asdict
+from io import BytesIO
+from pathlib import Path
 from random import uniform
 from time import sleep
 
 import pandas as pd
+import pendulum
 import undetected_chromedriver as uc
+from PIL import Image
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from slugify import slugify
 from urllib3.exceptions import ReadTimeoutError
 
 from models.item import Item
+from settings import data_dir as DEFAULT_DIRECTORY
+from settings import screenshots_format as DEFAULT_FORMAT
+from settings import screenshots_quality as DEFAULT_QUALITY
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -33,8 +41,11 @@ class BaseParser:
         city_locator=None,
         city_script=None,
     ):
+        options = uc.ChromeOptions()
+        options.add_argument("--force-device-scale-factor=0.67")
         with self._driver_lock:
-            self.browser = uc.Chrome(version_main=148)
+            self.browser = uc.Chrome(version_main=148, options=options)
+            self.browser.maximize_window()
         self.timeout = timeout
         self.by = by
         self.skipping_tag_locators = skipping_tag_locators
@@ -71,6 +82,7 @@ class BaseParser:
         try:
             self.browser.get(url)
             self._random_wait()
+            self._save_screenshot(requested_url=url)
             return True
         except (TimeoutException, TimeoutError, ReadTimeoutError) as e:
             logger.info(f"Encounter {e} while getting {url}. Attempt - {attempt}")
@@ -146,6 +158,28 @@ class BaseParser:
         except Exception as e:
             logger.error(f"Encountered exception {e} while parsing price")
             return 0
+
+    def _save_screenshot(self, requested_url: str):
+        try:
+            # Prepare foldername
+            folder_name = pendulum.today().to_date_string()
+            folder_path = Path(DEFAULT_DIRECTORY) / folder_name
+            folder_path.mkdir(parents=True, exist_ok=True)
+            # Prepare filename
+            requested_url = requested_url.replace("https://", "").replace("http://", "")
+            url_parts = requested_url.split("/")
+            screenshot_name = "_".join([url_parts[0], *url_parts[-2:]])
+            screenshot_name_slugified = slugify(screenshot_name)
+
+            screenshot_path = (folder_path / screenshot_name_slugified).with_suffix(
+                f".{DEFAULT_FORMAT}"
+            )
+            img = Image.open(BytesIO(self.browser.get_screenshot_as_png()))
+            img.save(screenshot_path, quality=DEFAULT_QUALITY)
+
+            logger.info(f"Screenshot saved: {screenshot_path}")
+        except Exception as e:
+            logger.exception(f"Screenshot NOT saved!")
 
     def export_to_df(self):
         return pd.DataFrame([asdict(item) for item in self.collected_data])

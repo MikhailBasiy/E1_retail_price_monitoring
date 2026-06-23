@@ -9,7 +9,6 @@ import pandas as pd
 import tldextract
 
 from parsers.bestmebelshop_parser import BestmebelshopParser
-from parsers.config import max_workers as DEFAULT_MAX_WORKERS
 from parsers.hoff_parser import HoffParser
 from parsers.lemanapro import LemanaproParser
 from parsers.mnogomebeli_parser import MnogomebeliParser
@@ -18,13 +17,15 @@ from parsers.ozon_parser import OzonParser
 from parsers.pm import PmParser
 from parsers.pushe import PusheParser
 from parsers.wildberries_parser import WildberriesParser
+from settings import data_dir as DEFAULT_DIRECTORY
+from settings import max_workers as DEFAULT_MAX_WORKERS
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 def dump_to_excel(data: pd.DataFrame) -> None:
-    output_dir = Path("data")
+    output_dir = Path(DEFAULT_DIRECTORY)
     output_dir.mkdir(parents=True, exist_ok=True)
     fdate = date.today().strftime("%Y-%m-%d")
     file_path = output_dir / f"{fdate}.xlsx"
