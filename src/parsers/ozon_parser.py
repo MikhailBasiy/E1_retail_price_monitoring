@@ -1,3 +1,5 @@
+import uuid
+
 import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -9,38 +11,129 @@ from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+SET_LOCATION_JS = """
+const callback = arguments[arguments.length - 1];
+const address = arguments[0];
+const lat = arguments[1];
+const lng = arguments[2];
+const geoSessionId = arguments[3];
+
+const baseURL = "https://ozon.com";
+const viewportDelta = 0.002;
+const leftBottomLat = lat - viewportDelta;
+const rightTopLat   = lat + viewportDelta;
+const leftBottomLng = lng - viewportDelta;
+const rightTopLng   = lng + viewportDelta;
+
+const mapBlock = {
+    viewport: {
+        leftBottom: { latitude: leftBottomLat, longitude: leftBottomLng },
+        rightTop:   { latitude: rightTopLat,   longitude: rightTopLng }
+    },
+    zoom: 17,
+    previousCoordinates: { latitude: lat, longitude: lng }
+};
+
+const mapInfo = {
+    geoSessionId: geoSessionId,
+    preferredGeoProviders: {
+        suggest:     ["maps_v1_courier_vector_v2", "maps_nspd", "maps_fallback_blocker", "yandex"],
+        geocode:     ["maps_v1_courier_vector_v2", "yandex"],
+        revGeocode:  ["maps_revgeocode_migeo", "maps_nspd", "yandex"]
+    }
+};
+
+const commonHeaders = {
+    "accept":             "application/json",
+    "accept-language":    "en-US,en;q=0.9",
+    "cache-control":      "no-cache",
+    "content-type":       "application/json",
+    "pragma":             "no-cache",
+    "priority":           "u=1, i",
+    "sec-ch-ua":          '"Not;A=Brand";v="8", "Chromium";v="150", "Google Chrome";v="150"',
+    "sec-ch-ua-mobile":   "?0",
+    "sec-ch-ua-platform": '"Windows"',
+    "sec-fetch-dest":     "empty",
+    "sec-fetch-mode":     "cors",
+    "sec-fetch-site":     "same-origin",
+    "x-o3-app-name":      "dweb_client"
+};
+
+async function doPost(path, body) {
+    const resp = await fetch(baseURL + path, {
+        headers: commonHeaders,
+        referrer: baseURL + "/",
+        body: JSON.stringify(body),
+        method: "POST",
+        mode: "cors",
+        credentials: "include"
+    });
+    return resp.json();
+}
+
+(async () => {
+    try {
+        // Step 1 — isGeolocationOnInit
+        await doPost(
+            "/api/entrypoint-api.bx/page/json/v2"
+                + "?url=%2Fmodal%2FcommonDelivery%3Flat%3D" + lat
+                + "%26long%3D" + lng + "%26nfr%3Dt%26pid%3D4%26pv%3D2%26tab%3Dc",
+            {
+                isGeolocationOnInit: false,
+                mapInfo: mapInfo,
+                form: { addressTail: address },
+                geolocation: { coords: {}, isAvailable: false },
+                map: mapBlock
+            }
+        );
+
+        // Step 2 — pid=5
+        await doPost(
+            "/api/entrypoint-api.bx/page/json/v2"
+                + "?url=%2Fmodal%2FcommonDelivery%3Fdt%3D1%26lat%3D" + lat
+                + "%26long%3D" + lng + "%26nfr%3Dt%26pid%3D5%26pv%3D2%26tab%3Dc",
+            {
+                form: { addressTail: address },
+                geolocation: { coords: {}, isAvailable: false },
+                map: mapBlock,
+                mapInfo: mapInfo
+            }
+        );
+
+        // Step 3 — pid=7 (full form)
+        const result = await doPost(
+            "/api/entrypoint-api.bx/page/json/v2"
+                + "?url=%2Fmodal%2FcommonDelivery%3Fdt%3D1%26lat%3D" + lat
+                + "%26long%3D" + lng + "%26nfr%3Dt%26pid%3D7%26pv%3D2%26tab%3Dc",
+            {
+                form: {
+                    addressLabel: "",
+                    addressTail: address,
+                    apartment: "",
+                    entrance: "",
+                    floor: "",
+                    intercom: "",
+                    comment: "",
+                    receiverName: "",
+                    receiverPhone: ""
+                },
+                geolocation: { coords: {}, isAvailable: false },
+                map: mapBlock,
+                mapInfo: mapInfo
+            }
+        );
+
+        callback(result);
+    } catch (err) {
+        callback({ error: err.message });
+    }
+})();
+"""
+
 
 class OzonParser(BaseParser):
     def __init__(self):
         self.start_url = "https://www.ozon.ru/"
-        self.set_location_script = """
-            fetch("https://www.ozon.ru/api/entrypoint-api.bx/page/json/v2?url=%2Fmodal%2FcommonDelivery%3Fazimuth%3D0.130473684379%26dt%3D1%26lat%3D55.7636337%26long%3D37.5963307%26msid%3De9e10a70-9402-4004-996c-010096328bcf%26nfr%3Dt%26pid%3D7%26pv%3D2%26pxlw%3D109.390625%26src_main%3D%252F%253Fundefinedrr%25253D1%252526abt_att%25253D1%26tab%3Dc", {
-              "headers": {
-                "accept": "application/json",
-                "accept-language": "en-US,en;q=0.9",
-                "cache-control": "no-cache",
-                "content-type": "application/json",
-                "pragma": "no-cache",
-                "priority": "u=1, i",
-                "sec-ch-ua": "\\"Not)A;Brand\\";v=\\"8\\", \\"Chromium\\";v=\\"138\\", \\"Google Chrome\\";v=\\"138\\"",
-                "sec-ch-ua-mobile": "?0",
-                "sec-ch-ua-platform": "\\"Windows\\"",
-                "sec-fetch-dest": "empty",
-                "sec-fetch-mode": "cors",
-                "sec-fetch-site": "same-origin",
-                "x-o3-app-name": "dweb_client",
-                "x-o3-app-version": "release_14-6-2025_400d776f",
-                "x-o3-manifest-version": "frontend-ozon-ru:400d776fe68f400fa36e7161a52673bc0fffb2d5,sf-render-api:6f19f23dcf46690966a6aed7a4773f60adddc7d0,rtb-render-api:ce8bfc5d972a18baed949deced0b05ed178f1075",
-                "x-o3-parent-requestid": "dad467cf798ca2f6f8b18f11207bacdb",
-                "x-page-view-id": "45738a9a-3b3e-47d0-dfe7-cb7a3e453d63"
-              },
-              "referrer": "https://www.ozon.ru/?__rr=1&abt_att=1",
-              "body": "{\\"mapInfo\\":{\\"geoSessionId\\":\\"5979ebb3-1565-4502-93fc-4b81012eaec6\\",\\"preferredGeoProviders\\":{\\"suggest\\":[\\"maps_selfsuggest_vector_misspell\\",\\"yandex\\"],\\"geocode\\":[\\"maps_selfsuggest_vector_misspell\\",\\"yandex\\"],\\"revGeocode\\":[\\"maps_selfsuggest_vector_misspell\\",\\"yandex\\"]}},\\"form\\":{\\"addressLabel\\":\\"\\",\\"addressTail\\":\\"Москва, Большой Козихинский переулок, 14 строение 2\\",\\"apartment\\":\\"\\",\\"entrance\\":\\"\\",\\"floor\\":\\"\\",\\"intercom\\":\\"\\",\\"comment\\":\\"\\",\\"receiverName\\":\\"\\",\\"receiverPhone\\":\\"\\"},\\"geolocation\\":{\\"coords\\":{},\\"isAvailable\\":false},\\"map\\":{\\"viewport\\":{\\"leftBottom\\":{\\"latitude\\":55.76111777646078,\\"longitude\\":37.59574384919354},\\"rightTop\\":{\\"latitude\\":55.76614945785769,\\"longitude\\":37.59691748327561}},\\"zoom\\":17,\\"previousCoordinates\\":{\\"latitude\\":55.76363369832409,\\"longitude\\":37.59633066623457}}}",
-              "method": "POST",
-              "mode": "cors",
-              "credentials": "include"
-            });
-        """
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
@@ -53,8 +146,8 @@ class OzonParser(BaseParser):
             '//div[@data-widget="webPrice"]/div/div[2]/div/div/span | '
             '//div[@data-widget="webPrice"]/div/div/div/div/span'
         )
-        self.min_delay = 15.0
-        self.max_delay = 22.0
+        self.min_delay = 5.0
+        self.max_delay = 8.0
 
         super().__init__(
             timeout=self.timeout,
@@ -67,17 +160,28 @@ class OzonParser(BaseParser):
         )
 
     def set_location(self, location: str):
+        geo = geo_settings[location]
+        lat = geo["latitude"]
+        lng = geo["longitude"]
+
         self.browser.execute_cdp_cmd(
             "Browser.grantPermissions",
             {
-                "origin": f"{self.start_url}",
+                "origin": self.start_url,
                 "permissions": ["geolocation"],
             },
         )
-        self.browser.execute_cdp_cmd(
-            "Emulation.setGeolocationOverride", geo_settings[location]
+        self.browser.execute_cdp_cmd("Emulation.setGeolocationOverride", geo)
+        self._open_page(self.start_url)
+        self._random_wait()
+
+        # Obtain a real address string for the coordinates (reuse the city name
+        # or provide a street address via config if needed).
+        address = location
+        geo_session_id = str(uuid.uuid4())
+
+        result = self.browser.execute_async_script(
+            SET_LOCATION_JS, address, lat, lng, geo_session_id
         )
-        self.browser.get(self.start_url)
-        super()._random_wait()
-        self.browser.execute_script(self.set_location_script)
+        logger.info(f"Location '{location}' set.")
         super()._random_wait()
