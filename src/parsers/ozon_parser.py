@@ -146,6 +146,9 @@ class OzonParser(BaseParser):
             '//div[@data-widget="webPrice"]/div/div[2]/div/div/span | '
             '//div[@data-widget="webPrice"]/div/div/div/div/span'
         )
+        self.city_script = """
+            return window.__NUXT__.state.location.current.city;
+        """
         self.min_delay = 5.0
         self.max_delay = 8.0
 
@@ -155,6 +158,7 @@ class OzonParser(BaseParser):
             skipping_tag_locators=self.skipping_tag_locators,
             name_locator=self.name_locator,
             price_locator=self.price_locator,
+            city_script=self.city_script,
             min_delay=self.min_delay,
             max_delay=self.max_delay,
         )
