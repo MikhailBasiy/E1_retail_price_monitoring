@@ -44,7 +44,7 @@ class BaseParser:
         options = uc.ChromeOptions()
         options.add_argument("--force-device-scale-factor=0.67")
         with self._driver_lock:
-            self.browser = uc.Chrome(version_main=148, options=options)
+            self.browser = uc.Chrome(version_main=150, options=options)
             self.browser.maximize_window()
         self.timeout = timeout
         self.by = by
@@ -90,22 +90,6 @@ class BaseParser:
                 return False
             else:
                 return self._open_page(url, attempt + 1)
-        # if self._check_page_loaded():
-        #     self._random_wait()
-        #     return True
-        # elif attempt < self.max_retries:
-        #     return self._open_page(url, attempt + 1)
-
-    # def _check_page_loaded(self):
-    #     wait = WebDriverWait(self.browser, self.timeout)
-    #     try:
-    #         WebDriverWait(self.browser, self.timeout).until(
-    #             lambda d: d.execute_script("return document.readyState") == "complete"
-    #         )
-    #     except TimeoutError:
-    #         return False
-    #     else:
-    #         return True
 
     def _random_wait(self):
         delay = uniform(self.min_delay, self.max_delay)
