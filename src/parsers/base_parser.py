@@ -42,7 +42,7 @@ class BaseParser:
         city_script=None,
     ):
         options = uc.ChromeOptions()
-        options.add_argument("--force-device-scale-factor=0.67")
+        options.add_argument("--force-device-scale-factor=0.75")
         with self._driver_lock:
             self.browser = uc.Chrome(version_main=150, options=options)
             self.browser.maximize_window()
