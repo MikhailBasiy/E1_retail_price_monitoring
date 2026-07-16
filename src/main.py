@@ -13,7 +13,7 @@ from parsers.config import VALID_LOCATIONS
 from parsers.hoff_parser import HoffParser
 from parsers.lemanapro import LemanaproParser
 from parsers.mnogomebeli_parser import MnogomebeliParser
-from parsers.nonton_parser import NontonParser
+from parsers.nonton import NontonParser
 from parsers.ozon import OzonParser
 from parsers.pm import PmParser
 from parsers.pushe import PusheParser
