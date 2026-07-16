@@ -3,12 +3,13 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
-from typing import DefaultDict, List
+from typing import DefaultDict, Optional
 
 import pandas as pd
 import tldextract
 
 from parsers.bestmebelshop_parser import BestmebelshopParser
+from parsers.config import VALID_LOCATIONS
 from parsers.hoff_parser import HoffParser
 from parsers.lemanapro import LemanaproParser
 from parsers.mnogomebeli_parser import MnogomebeliParser
@@ -46,7 +47,9 @@ PARSERS = {
 }
 
 
-def process_domain(domain: str, urls: list[str]) -> pd.DataFrame:
+def _process_single_location(
+    domain: str, urls: list[str], location: str
+) -> pd.DataFrame:
     parser_class = PARSERS.get(domain)
 
     if parser_class is None:
@@ -54,30 +57,47 @@ def process_domain(domain: str, urls: list[str]) -> pd.DataFrame:
         return pd.DataFrame(columns=["url", "name", "price"])
 
     try:
-        logger.info(f"Start parsing {domain}")
+        logger.info(f"Start parsing {domain} in {location}")
 
         with parser_class() as parser:
-            parser.set_location("Москва")
+            parser.set_location(location)
             parser.collect_data(urls)
             result = parser.export_to_df()
 
-        logger.info(f"Finished parsing {domain}. Parsed {len(result)} items")
+        logger.info(
+            f"Finished parsing {domain} in {location}. " f"Parsed {len(result)} items"
+        )
         return result
 
     except Exception:
-        logger.exception(f"Failed while processing domain {domain}")
+        logger.exception(f"Failed while processing {domain} in {location}")
         return pd.DataFrame(columns=["url", "name", "price"])
 
 
-def collect_data(urls_by_domains: DefaultDict[str, list[str]]) -> pd.DataFrame:
-    dfs = []
+def process_domain(domain: str, urls: list[str], locations: list[str]) -> pd.DataFrame:
+    results = []
+    for location in locations:
+        df = _process_single_location(domain, urls, location)
+        if not df.empty:
+            results.append(df)
 
-    # Используем импортированный max_workers, если он задан
+    if not results:
+        return pd.DataFrame(columns=["url", "name", "price", "city"])
+
+    return pd.concat(results, ignore_index=True)
+
+
+def collect_data(
+    urls_by_domains: DefaultDict[str, list[str]],
+    locations: list[str],
+) -> pd.DataFrame:
+    dfs: list[pd.DataFrame] = []
+
     workers = min(DEFAULT_MAX_WORKERS or 4, len(urls_by_domains))
 
     with ThreadPoolExecutor(max_workers=workers) as executor:
         futures = {
-            executor.submit(process_domain, domain, urls): domain
+            executor.submit(process_domain, domain, urls, locations): domain
             for domain, urls in urls_by_domains.items()
         }
 
@@ -109,37 +129,53 @@ def get_domain_urls() -> DefaultDict[str, list[str]]:
 
     urls_by_domains = defaultdict(list)
     for url in all_urls:
-        domain = tldextract.extract(url).registered_domain
+        domain = tldextract.extract(url).top_domain_under_public_suffix
         if domain:
             urls_by_domains[domain].append(url)
 
     return urls_by_domains
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Web parser for furniture shops.")
+def _build_arg_parser() -> argparse.ArgumentParser:
+    arg_parser = argparse.ArgumentParser(description="Web parser for furniture shops.")
 
-    # Создаем маппинг "имя аргумента -> домен" на основе ключей PARSERS
-    # Например: 'wildberries' -> 'wildberries.ru'
     arg_to_domain = {domain.split(".")[0]: domain for domain in PARSERS}
 
-    for arg_name in arg_to_domain:
-        parser.add_argument(
+    for arg_name, domain in arg_to_domain.items():
+        arg_parser.add_argument(
             f"--{arg_name}",
             action="store_true",
-            help=f"Run parser for {arg_to_domain[arg_name]}",
+            help=f"Run parser for {domain}",
         )
 
-    args = parser.parse_args()
+    arg_parser.add_argument(
+        "--location",
+        nargs="+",
+        default=None,
+        choices=VALID_LOCATIONS,
+        help=(
+            "Список городов для парсинга. "
+            "Пример: --location Москва Новосибирск. "
+            "По умолчанию — все города из geo_settings."
+        ),
+    )
 
-    # Проверяем, были ли переданы какие-либо флаги для фильтрации
+    return arg_parser, arg_to_domain
+
+
+def main():
+    arg_parser, arg_to_domain = _build_arg_parser()
+    args = arg_parser.parse_args()
+
+    locations = args.location or VALID_LOCATIONS
+    logger.info(f"Locations: {', '.join(locations)}")
+
     selected_domains = [
-        domain for arg, domain in arg_to_domain.items() if getattr(args, arg)
+        domain for arg, domain in arg_to_domain.items() if getattr(args, arg, False)
     ]
 
     domain_urls = get_domain_urls()
 
-    # Если указаны конкретные парсеры, фильтруем список задач
     if selected_domains:
         domain_urls = {
             d: urls for d, urls in domain_urls.items() if d in selected_domains
@@ -150,9 +186,10 @@ def main():
         logger.warning("No URLs found for the selected domains or urls.txt is empty.")
         return
 
-    collected_data = collect_data(domain_urls)
+    collected_data = collect_data(domain_urls, locations)
 
     if not collected_data.empty:
+        location_suffix = "_".join(locations) if len(locations) <= 2 else "multi"
         dump_to_excel(collected_data)
     else:
         logger.warning("No data was collected, skipping export.")

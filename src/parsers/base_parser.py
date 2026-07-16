@@ -73,7 +73,7 @@ class BaseParser:
                 continue
             elif self._check_product_available():
                 name, price, city = self._parse_data()
-                self.collected_data.append(Item(url, name, price))
+                self.collected_data.append(Item(url, name, price, city))
             else:
                 self.collected_data.append(Item(url, "Нет в продаже", 0))
                 logger.info(f"Item is {'Нет в продаже'}\nPrice is {0}")
