@@ -11,29 +11,7 @@ logger = get_logger(__name__)
 class PmParser(BaseParser):
     def __init__(self):
         self.start_url = "https://pm.ru/"
-        self.cookies = [
-            {
-                "name": "user_city",
-                "value": "411",
-                "domain": ".pm.ru",
-                "secure": False,
-                "httpOnly": False,
-            },
-            {
-                "name": "user_region",
-                "value": "13",
-                "domain": ".pm.ru",
-                "secure": False,
-                "httpOnly": False,
-            },
-            {
-                "name": "user_warehouse",
-                "value": "1",
-                "domain": ".pm.ru",
-                "secure": False,
-                "httpOnly": False,
-            },
-        ]
+
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
@@ -58,21 +36,38 @@ class PmParser(BaseParser):
         )
 
     def set_location(self, location: str):
-        self.browser.execute_cdp_cmd(
-            "Browser.grantPermissions",
+        user_city = {"Москва": 411, "Новосибирск": 388}
+        user_region = {"Москва": 13, "Новосибирск": 51}
+        cookies = [
             {
-                "origin": f"{self.start_url}",
-                "permissions": ["geolocation"],
+                "name": "user_city",
+                "value": str(user_city[location]),
+                "domain": ".pm.ru",
+                "secure": False,
+                "httpOnly": False,
             },
-        )
-        self.browser.execute_cdp_cmd(
-            "Emulation.setGeolocationOverride", geo_settings[location]
-        )
+            {
+                "name": "user_region",
+                "value": str(user_region[location]),
+                "domain": ".pm.ru",
+                "secure": False,
+                "httpOnly": False,
+            },
+        ]
+        # self.browser.execute_cdp_cmd(
+        #     "Browser.grantPermissions",
+        #     {
+        #         "origin": f"{self.start_url}",
+        #         "permissions": ["geolocation"],
+        #     },
+        # )
+        # self.browser.execute_cdp_cmd(
+        #     "Emulation.setGeolocationOverride", geo_settings[location]
+        # )
         self.browser.get(self.start_url)
-        super()._random_wait()
-        for cookie in self.cookies:
+        # super()._random_wait()
+        for cookie in cookies:
             self.browser.delete_cookie(cookie["name"])
             self.browser.add_cookie(cookie)
-        self._open_page(self.start_url)
         logger.info(f"Location {location} is set")
         super()._random_wait()
