@@ -9,9 +9,9 @@ logger = get_logger(__name__)
 
 
 class PmParser(BaseParser):
-    def __init__(self):
+    def __init__(self, location):
+        self.location = location
         self.start_url = "https://pm.ru/"
-
         self.timeout = 10
         self.by = By.XPATH
         self.skipping_tag_locators = [
@@ -25,6 +25,7 @@ class PmParser(BaseParser):
         self.max_delay = 7.0
 
         super().__init__(
+            location=self.location,
             timeout=self.timeout,
             by=self.by,
             skipping_tag_locators=self.skipping_tag_locators,
@@ -35,20 +36,20 @@ class PmParser(BaseParser):
             max_delay=self.max_delay,
         )
 
-    def set_location(self, location: str):
+    def set_location(self):
         user_city = {"Москва": 411, "Новосибирск": 388}
         user_region = {"Москва": 13, "Новосибирск": 51}
         cookies = [
             {
                 "name": "user_city",
-                "value": str(user_city[location]),
+                "value": str(user_city[self.location]),
                 "domain": ".pm.ru",
                 "secure": False,
                 "httpOnly": False,
             },
             {
                 "name": "user_region",
-                "value": str(user_region[location]),
+                "value": str(user_region[self.location]),
                 "domain": ".pm.ru",
                 "secure": False,
                 "httpOnly": False,
@@ -69,5 +70,5 @@ class PmParser(BaseParser):
         for cookie in cookies:
             self.browser.delete_cookie(cookie["name"])
             self.browser.add_cookie(cookie)
-        logger.info(f"Location {location} is set")
+        logger.info(f"Location {self.location} is set")
         super()._random_wait()

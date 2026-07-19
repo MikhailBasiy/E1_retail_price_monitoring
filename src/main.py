@@ -59,8 +59,8 @@ def _process_single_location(
     try:
         logger.info(f"Start parsing {domain} in {location}")
 
-        with parser_class() as parser:
-            parser.set_location(location)
+        with parser_class(location) as parser:
+            parser.set_location()
             parser.collect_data(urls)
             result = parser.export_to_df()
 

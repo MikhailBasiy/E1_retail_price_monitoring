@@ -132,7 +132,8 @@ async function doPost(path, body) {
 
 
 class OzonParser(BaseParser):
-    def __init__(self):
+    def __init__(self, location: str):
+        self.location = location
         self.start_url = "https://www.ozon.ru/"
         self.timeout = 10
         self.by = By.XPATH
@@ -153,6 +154,7 @@ class OzonParser(BaseParser):
         self.max_delay = 8.0
 
         super().__init__(
+            location=self.location,
             timeout=self.timeout,
             by=self.by,
             skipping_tag_locators=self.skipping_tag_locators,
@@ -163,8 +165,8 @@ class OzonParser(BaseParser):
             max_delay=self.max_delay,
         )
 
-    def set_location(self, location: str):
-        geo = geo_settings[location]
+    def set_location(self):
+        geo = geo_settings[self.location]
         lat = geo["latitude"]
         lng = geo["longitude"]
 
@@ -181,11 +183,11 @@ class OzonParser(BaseParser):
 
         # Obtain a real address string for the coordinates (reuse the city name
         # or provide a street address via config if needed).
-        address = location
+        address = self.location
         geo_session_id = str(uuid.uuid4())
 
         result = self.browser.execute_async_script(
             SET_LOCATION_JS, address, lat, lng, geo_session_id
         )
-        logger.info(f"Location '{location}' set.")
-        super()._random_wait()
+        logger.info(f"Location '{self.location}' set.")
+        # super()._random_wait()
