@@ -31,6 +31,7 @@ class BaseParser:
 
     def __init__(
         self,
+        location,
         timeout,
         by,
         skipping_tag_locators,
@@ -46,6 +47,7 @@ class BaseParser:
         with self._driver_lock:
             self.browser = uc.Chrome(version_main=150, options=options)
             self.browser.maximize_window()
+        self.location = location
         self.timeout = timeout
         self.by = by
         self.skipping_tag_locators = skipping_tag_locators
@@ -150,9 +152,13 @@ class BaseParser:
             folder_path = Path(DEFAULT_DIRECTORY) / folder_name
             folder_path.mkdir(parents=True, exist_ok=True)
             # Prepare filename
-            requested_url = requested_url.replace("https://", "").replace("http://", "")
+            requested_url = (
+                requested_url.replace("https://", "")
+                .replace("http://", "")
+                .replace("www", "")
+            )
             url_parts = requested_url.split("/")
-            screenshot_name = "_".join([url_parts[0], *url_parts[-2:]])
+            screenshot_name = "_".join([url_parts[0], *url_parts[-2:], self.location])
             screenshot_name_slugified = slugify(screenshot_name)
 
             screenshot_path = (folder_path / screenshot_name_slugified).with_suffix(
