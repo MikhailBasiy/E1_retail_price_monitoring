@@ -17,7 +17,7 @@ from parsers.nonton import NontonParser
 from parsers.ozon import OzonParser
 from parsers.pm import PmParser
 from parsers.pushe import PusheParser
-from parsers.wildberries_parser import WildberriesParser
+from parsers.wildberries import WildberriesParser
 from settings import data_dir as DEFAULT_DIRECTORY
 from settings import max_workers as DEFAULT_MAX_WORKERS
 from utils.logger import get_logger
