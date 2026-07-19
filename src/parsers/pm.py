@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 
 class PmParser(BaseParser):
-    def __init__(self, location):
+    def __init__(self, location: str):
         self.location = location
         self.start_url = "https://pm.ru/"
         self.timeout = 10

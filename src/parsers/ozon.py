@@ -189,5 +189,5 @@ class OzonParser(BaseParser):
         result = self.browser.execute_async_script(
             SET_LOCATION_JS, address, lat, lng, geo_session_id
         )
-        logger.info(f"Location '{self.location}' set.")
+        logger.info(f"Location '{self.location}' set")
         # super()._random_wait()
