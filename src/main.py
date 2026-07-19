@@ -12,7 +12,7 @@ from parsers.bestmebelshop_parser import BestmebelshopParser
 from parsers.config import VALID_LOCATIONS
 from parsers.hoff_parser import HoffParser
 from parsers.lemanapro import LemanaproParser
-from parsers.mnogomebeli_parser import MnogomebeliParser
+from parsers.mnogomebeli import MnogomebeliParser
 from parsers.nonton import NontonParser
 from parsers.ozon import OzonParser
 from parsers.pm import PmParser
