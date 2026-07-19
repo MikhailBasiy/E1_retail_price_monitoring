@@ -8,7 +8,7 @@ from typing import DefaultDict, Optional
 import pandas as pd
 import tldextract
 
-from parsers.bestmebelshop_parser import BestmebelshopParser
+from parsers.bestmebelshop import BestmebelshopParser
 from parsers.config import VALID_LOCATIONS
 from parsers.hoff_parser import HoffParser
 from parsers.lemanapro import LemanaproParser
