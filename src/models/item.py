@@ -7,3 +7,4 @@ class Item:
     name: str
     price: int
     city: str
+    product_available: bool

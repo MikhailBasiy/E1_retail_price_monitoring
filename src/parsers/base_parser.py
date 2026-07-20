@@ -5,9 +5,11 @@ from io import BytesIO
 from pathlib import Path
 from random import uniform
 from time import sleep
+from urllib.parse import urlparse, urlunparse
 
 import pandas as pd
 import pendulum
+import tldextract
 import undetected_chromedriver as uc
 from PIL import Image
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
@@ -48,6 +50,7 @@ class BaseParser:
             self.browser = uc.Chrome(version_main=150, options=options)
             self.browser.maximize_window()
         self.location = location
+        self.subdomain = None
         self.timeout = timeout
         self.by = by
         self.skipping_tag_locators = skipping_tag_locators
@@ -68,21 +71,26 @@ class BaseParser:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.browser.quit()
 
-    def collect_data(self, urls: list[str]):
+    def collect_data(self, urls: list[str]) -> None:
         for url in urls:
             if not self._open_page(url):
                 logger.error(f"Page {url} was NOT downloaded")
                 continue
-            elif self._check_product_available():
-                name, price, city = self._parse_data()
-                self.collected_data.append(Item(url, name, price, city))
-            else:
-                self.collected_data.append(Item(url, "Нет в продаже", 0))
-                logger.info(f"Item is {'Нет в продаже'}\nPrice is {0}")
+            name = self._parse_name()
+            price = self._parse_price()
+            city = self._parse_city()
+            product_available = self._product_available()
+            logger.info(
+                f"Item is {name}, Price is {price}, City is {city}, Available {product_available}"
+            )
+            self.collected_data.append(Item(url, name, price, city, product_available))
 
     def _open_page(self, url, attempt=1):
         try:
-            self.browser.get(url)
+            logger.info(f"URL is {url}")
+            prepared_url = self._prepare_url(url)
+            logger.info(f"prepared url is {prepared_url}")
+            self.browser.get(prepared_url)
             self._random_wait()
             self._save_screenshot(requested_url=url)
             return True
@@ -93,12 +101,20 @@ class BaseParser:
             else:
                 return self._open_page(url, attempt + 1)
 
+    def _prepare_url(self, url: str) -> str:
+        if not self.subdomain:
+            return url
+        parsed = urlparse(url)
+        ext = tldextract.extract(parsed.netloc)
+        host = f"{self.subdomain}.{ext.domain}.{ext.suffix}"
+        return urlunparse(parsed._replace(netloc=host))
+
     def _random_wait(self):
-        delay = uniform(self.min_delay, self.max_delay)
-        logger.info(f"Waiting for {round(delay, 2)} sec")
+        delay = round(uniform(self.min_delay, self.max_delay), 2)
+        logger.info(f"Waiting for {delay} sec")
         sleep(delay)
 
-    def _check_product_available(self):
+    def _product_available(self):
         if any(
             self.browser.find_elements(self.by, skipping_tag)
             for skipping_tag in self.skipping_tag_locators
@@ -109,7 +125,6 @@ class BaseParser:
             if WebDriverWait(self.browser, self.timeout).until(
                 EC.presence_of_element_located((self.by, self.price_locator))
             ):
-                logger.info(f"Price found: {self.browser.current_url}")
                 return True
         except TimeoutException:
             logger.error(
@@ -117,18 +132,25 @@ class BaseParser:
             )
             return False
 
-    def _parse_data(self):
+    def _parse_name(self) -> str:
         try:
-            name = self.browser.find_element(self.by, self.name_locator).text
-            price = self._normalize_price(
+            return self.browser.find_element(self.by, self.name_locator).text
+        except NoSuchElementException as e:
+            logger.error(
+                f"Can't find product name on the page {self.browser.current_url}: {e}"
+            )
+            return ""
+
+    def _parse_price(self) -> str:
+        try:
+            return self._normalize_price(
                 self.browser.find_element(self.by, self.price_locator).text
             )
-            city = self._parse_city()
-            logger.info(f"Item is {name}\nPrice is {price}\nCity is {city}")
-            return name, price, city
         except NoSuchElementException as e:
-            logger.error(f"Can't find data on the page {self.browser.current_url}: {e}")
-            return "", "", ""
+            logger.error(
+                f"Can't find price on the page {self.browser.current_url}: {e}"
+            )
+            return ""
 
     def _parse_city(self):
         if self.city_locator:
