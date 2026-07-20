@@ -10,7 +10,7 @@ import tldextract
 
 from parsers.bestmebelshop import BestmebelshopParser
 from parsers.config import VALID_LOCATIONS
-from parsers.hoff_parser import HoffParser
+from parsers.hoff import HoffParser
 from parsers.lemanapro import LemanaproParser
 from parsers.mnogomebeli import MnogomebeliParser
 from parsers.nonton import NontonParser
