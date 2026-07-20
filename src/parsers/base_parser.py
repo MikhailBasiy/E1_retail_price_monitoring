@@ -87,9 +87,7 @@ class BaseParser:
 
     def _open_page(self, url, attempt=1):
         try:
-            logger.info(f"URL is {url}")
             prepared_url = self._prepare_url(url)
-            logger.info(f"prepared url is {prepared_url}")
             self.browser.get(prepared_url)
             self._random_wait()
             self._save_screenshot(requested_url=url)
