@@ -6,14 +6,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 from parsers.base_parser import BaseParser
-from parsers.config import geo_settings
+from parsers.parsers_config.nonton import SUBDOMAINS
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 class NontonParser(BaseParser):
-    def __init__(self):
+    def __init__(self, location: str):
+        self.location = location
         self.start_url = "https://www.nonton.ru/"
         self.timeout = 10
         self.by = By.XPATH
@@ -27,6 +28,7 @@ class NontonParser(BaseParser):
         self.max_delay = 5.0
 
         super().__init__(
+            location=self.location,
             timeout=self.timeout,
             by=self.by,
             skipping_tag_locators=self.skipping_tag_locators,
@@ -37,14 +39,5 @@ class NontonParser(BaseParser):
             max_delay=self.max_delay,
         )
 
-    def set_location(self, location: str):
-        self.browser.execute_cdp_cmd(
-            "Browser.grantPermissions",
-            {
-                "origin": f"{self.start_url}",
-                "permissions": ["geolocation"],
-            },
-        )
-        self.browser.execute_cdp_cmd(
-            "Emulation.setGeolocationOverride", geo_settings[location]
-        )
+    def set_location(self) -> None:
+        self.subdomain = SUBDOMAINS[self.location]
