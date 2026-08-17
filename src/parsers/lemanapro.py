@@ -5,14 +5,15 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
 from parsers.base_parser import BaseParser
-from parsers.config import geo_settings
+from parsers.parsers_config.lemanapro import SUBDOMAINS
 from utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 class LemanaproParser(BaseParser):
-    def __init__(self):
+    def __init__(self, location: str):
+        self.location = location
         self.start_url = "https://lemanapro.ru/"
         ### Browser options
         self.browser_options = Options()
@@ -24,17 +25,19 @@ class LemanaproParser(BaseParser):
             '//h1[text()="404"]',
             '//div[@data-qa="out-of-stock-label"]/span[text()="Товар закончился"]',
         ]
-        self.name_locator = '//h1[@data-qa="product-name"]/span'
+        self.name_locator = '//h1[@data-qa="product-name"]'
         self.price_locator = '//div[@data-qa="prices_mf-pdp"]//div[@data-testid="price-block-price"]//span[@data-testid="price-integer"]'
-        self.city_script = 'return document.querySelector("button[data-qa=\'region-modal-button\'] span.h4lh9ow_header-footer")?.textContent || "";'
+        self.city_script = """
+        const spans = document.querySelectorAll(
+            'button[data-qa="region-modal-button"] span'
+        );
+        return spans.length > 1 ? spans[1].textContent.trim() : "";
+        """
         self.min_delay = 5.0
         self.max_delay = 8.0
-        self.geo_prefixes = {
-            "Москва": None,  # The site doesn't use geo prefix for Moscow
-            "Новосибирск": "novosibirsk",
-        }
 
         super().__init__(
+            location=self.location,
             timeout=self.timeout,
             by=self.by,
             skipping_tag_locators=self.skipping_tag_locators,
@@ -45,24 +48,5 @@ class LemanaproParser(BaseParser):
             max_delay=self.max_delay,
         )
 
-    def set_location(self, location: str):
-        ### Install not necessary browser geolocation
-        self.browser.execute_cdp_cmd(
-            "Browser.grantPermissions",
-            {
-                "origin": f"{self.start_url}",
-                "permissions": ["geolocation"],
-            },
-        )
-        self.browser.execute_cdp_cmd(
-            "Emulation.setGeolocationOverride", geo_settings[location]
-        )
-
-        if self.geo_prefixes[location]:
-            parsed_url = urlparse(self.start_url)
-            new_netloc = ".".join((self.geo_prefixes[location], parsed_url.netloc))
-            self.start_url = urlunparse(parsed_url._replace(netloc=new_netloc))
-
-        self.browser.get(self.start_url)
-        super()._random_wait()
-        logger.info(f"Location '{location}' is set.")
+    def set_location(self) -> None:
+        self.subdomain = SUBDOMAINS[self.location]
