@@ -21,6 +21,7 @@ from urllib3.exceptions import ReadTimeoutError
 
 from models.item import Item
 from settings import data_dir as DEFAULT_DIRECTORY
+from settings import proxy as PROXY
 from settings import screenshots_format as DEFAULT_FORMAT
 from settings import screenshots_quality as DEFAULT_QUALITY
 from utils.logger import get_logger
@@ -43,9 +44,12 @@ class BaseParser:
         max_delay,
         city_locator=None,
         city_script=None,
+        via_proxy=False,
     ):
         options = uc.ChromeOptions()
         options.add_argument("--force-device-scale-factor=0.75")
+        if via_proxy:
+            options.add_argument(f"--proxy-server={PROXY}")
         with self._driver_lock:
             self.browser = uc.Chrome(version_main=150, options=options)
             self.browser.maximize_window()
