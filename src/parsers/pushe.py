@@ -44,7 +44,7 @@ class PusheParser(BaseParser):
             city_script=self.city_script,
             min_delay=self.min_delay,
             max_delay=self.max_delay,
-            via_proxy=True,
+            # via_proxy=True,
         )
 
     def set_location(self) -> None:
